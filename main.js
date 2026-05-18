@@ -47,7 +47,7 @@ function createWindow() {
         // 设置极高层级
         mainWindow.setAlwaysOnTop(true, 'pop-up-menu');
         // 避免全屏切换时动画导致的闪烁
-        app.dock.hide(); // 隐藏 Dock 图标，让它彻底变成后台常驻挂件
+        app.dock.show(); // 隐藏 Dock 图标，让它彻底变成后台常驻挂件
     }
 
     // 监听窗口被销毁
