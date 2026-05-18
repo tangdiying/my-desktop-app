@@ -1,38 +1,42 @@
-const { app, BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const path = require('path');
 
 let mainWindow;
 
+// 定义两个状态的尺寸
+const BALL_SIZE = 50;   // 悬浮球大小 (50x50)
+const PANEL_WIDTH = 400; // 展开后的面板宽度
+const PANEL_HEIGHT = 300; // 展开后的面板高度
+
 function createWindow() {
-    // 获取当前主屏幕
     const primaryDisplay = screen.getPrimaryDisplay();
-    // 使用 workArea 确保适配了任务栏/导航栏的位置
     const { x: workX, y: workY, width: screenWidth } = primaryDisplay.workArea;
     
-    const winWidth = 400;
-    const winHeight = 300;
-    
-    // 精准计算右上角位置
-    const winX = workX + screenWidth - winWidth;
-    const winY = workY;
+    const padding = 10; 
+    // 初始状态是悬浮球，计算悬浮球在右上角的位置
+    const winX = workX + screenWidth - BALL_SIZE - padding;
+    const winY = workY + padding;
 
     mainWindow = new BrowserWindow({
-        width: winWidth,
-        height: winHeight,
+        width: BALL_SIZE,     // 初始为悬浮球宽度
+        height: BALL_SIZE,    // 初始为悬浮球高度
         x: winX, 
         y: winY, 
-        frame: false,             // 无边框
-        transparent: true,       // 透明背景
-        alwaysOnTop: true,       // 初始置顶
-        skipTaskbar: true,       // (可选) 不在任务栏/Dock栏显示，更像一个纯粹的组件
+        frame: false,            
+        transparent: true,       
+        hasShadow: false,     // 悬浮球状态下可以先关闭阴影，展开时再打开
+        resizable: false,        
+        alwaysOnTop: true,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true, // 现代 Electron 推荐开启安全策略
+            // 确保 preload.js 存在，用于桥接通信
+            preload: path.join(__dirname, 'preload.js'), 
+            contextIsolation: true,
             nodeIntegration: false
         }
     });
 
     mainWindow.loadFile('index.html');
+    // mainWindow.webContents.openDevTools({ mode: 'detach' });
 
     // 针对 macOS 的高级置顶与跨虚拟桌面（Space）配置
     if (process.platform === 'darwin') {
@@ -71,4 +75,44 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+
+
+// --- IPC 进程间通信监听 ---
+// 1. 切换到面板状态（展开）
+ipcMain.on('switch-to-panel', () => {
+    if (!mainWindow) return;
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { x: workX, y: workY, width: screenWidth } = primaryDisplay.workArea;
+    const padding = 10;
+
+    // 重新计算长方形面板的左上角 X 坐标，让它向左扩展而保持右上角对齐
+    const newX = workX + screenWidth - PANEL_WIDTH - padding;
+    
+    mainWindow.setHasShadow(true); // 展开时开启阴影
+    mainWindow.setBounds({
+        x: newX,
+        y: workY + padding,
+        width: PANEL_WIDTH,
+        height: PANEL_HEIGHT
+    }, true); // true 表示启用平滑动画过渡 (Mac 上有效)
+});
+
+// 2. 切换到悬浮球状态（收起）
+ipcMain.on('switch-to-ball', () => {
+    if (!mainWindow) return;
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { x: workX, y: workY, width: screenWidth } = primaryDisplay.workArea;
+    const padding = 10;
+
+    // 重新计算圆球的 X 坐标，缩回右上角
+    const newX = workX + screenWidth - BALL_SIZE - padding;
+
+    mainWindow.setHasShadow(false); // 收起时关闭阴影
+    mainWindow.setBounds({
+        x: newX,
+        y: workY + padding,
+        width: BALL_SIZE,
+        height: BALL_SIZE
+    }, true);
 });

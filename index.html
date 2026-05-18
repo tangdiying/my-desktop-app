@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>随手记</title>
     <style>
-        /* 全局重置，确保铺满窗口 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -14,27 +13,52 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: rgba(30, 30, 30, 0.75); /* 暗色半透明 */
-            backdrop-filter: blur(20px);              /* 高级毛玻璃效果 */
-            color: #f5f5f7;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             height: 100vh;
             overflow: hidden;
-            border-radius: 12px;                      /* 圆角卡片 */
-            border: 1px solid rgba(255, 255, 255, 0.15); /* 细腻的边框线 */
+            background-color: transparent; /* 窗口背景必须透明 */
         }
 
-        .container {
+        /* ================= 1. 悬浮球样式 ================= */
+        .floating-ball {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 149, 0, 0.85); /* 漂亮的橙色 */
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.2s;
+            -webkit-app-region: drag; /* 允许拖动悬浮球 */
+        }
+        .floating-ball:hover {
+            transform: scale(1.05);
+            background: rgba(255, 149, 0, 1);
+        }
+
+        /* ================= 2. 备忘录面板样式 ================= */
+        .memo-panel {
+            width: 100%;
+            height: 100%;
+            background-color: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(20px);
+            color: #f5f5f7;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             display: flex;
             flex-direction: column;
-            height: 100%;
         }
 
-        /* 顶部拖拽条：专属拖拽区域 */
         .drag-bar {
             height: 30px;
             width: 100%;
-            -webkit-app-region: drag; /* 只有这里负责拖拽 */
+            -webkit-app-region: drag;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -45,17 +69,15 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* 主体交互区：必须明确禁止拖拽，否则无法点击和输入 */
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             padding: 12px;
             gap: 10px;
-            -webkit-app-region: no-drag; /* 显式禁止拖拽，恢复点击事件 */
+            -webkit-app-region: no-drag;
         }
 
-        /* 仿备忘录的文本框 */
         textarea {
             flex: 1;
             background: transparent;
@@ -64,15 +86,9 @@
             color: #f5f5f7;
             font-size: 14px;
             line-height: 1.5;
-            resize: none; /* 禁止手动调整大小 */
-            font-family: inherit;
+            resize: none;
         }
 
-        textarea::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* 底部工具栏 */
         .footer {
             display: flex;
             justify-content: space-between;
@@ -85,39 +101,60 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
-        /* 现代质感按钮 */
+        /* 收起按钮 */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
         button {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 5px 14px;
+            padding: 5px 12px;
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
         }
+        button.hide-btn {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        button:hover { background: rgba(255, 255, 255, 0.25); }
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
+        /* ================= 3. 状态切换控制 ================= */
+        /* 默认是悬浮球状态 */
+        body.is-ball .floating-ball { display: flex; }
+        body.is-ball .memo-panel { display: none; }
 
-        button:active {
-            transform: scale(0.95);
-        }
+        /* 面板状态 */
+        body.is-panel .floating-ball { display: none; }
+        body.is-panel .memo-panel { display: flex; }
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <!-- 专门用来按住拖动的区域 -->
+<!-- 初始状态设为悬浮球 is-ball -->
+<body class="is-ball">
+
+    <!-- 1. 悬浮球组件 -->
+    <!-- 注意：为了防止拖拽和点击冲突，我们监听 double click (双击) 或单击来展开 -->
+    <!-- 外层只负责提供给 Mac 鼠标拖动、定位 -->
+    <div class="floating-ball" style="-webkit-app-region: drag;">
+        <!-- 内层加 no-drag，专门用来接收点击事件 -->
+        <div style="-webkit-app-region: no-drag; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="expandToPanel()">
+            📝
+        </div>
+    </div>
+
+    <!-- 2. 备忘录面板组件 -->
+    <div class="memo-panel">
         <div class="drag-bar">••• 随手记 •••</div>
-        
-        <!-- 具体的交互内容区域 -->
         <div class="main-content">
-            <textarea id="problemText" placeholder="有一些新想法？在这里记录开发问题..."></textarea>
+            <textarea id="problemText" placeholder="有一些新想法？在这里记录..."></textarea>
             <div class="footer">
                 <span id="status" class="status-tip">已载入历史记录</span>
-                <button onclick="saveProblem()">保存</button>
+                <div class="btn-group">
+                    <button class="hide-btn" onclick="collapseToBall()">收起</button>
+                    <button onclick="saveProblem()">保存</button>
+                </div>
             </div>
         </div>
     </div>
