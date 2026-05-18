@@ -1,7 +1,8 @@
-const { app, BrowserWindow, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, Menu, globalShortcut } = require('electron');
 const path = require('path');
 
 let mainWindow;
+let isPanelMode = false; // <-- 确保它在这里被正确定义
 
 // 定义两个状态的尺寸
 const BALL_SIZE = 50;   // 悬浮球大小 (50x50)
@@ -36,6 +37,7 @@ function createWindow() {
     });
 
     mainWindow.loadFile('index.html');
+    // mainWindow.webContents.openDevTools();
     // mainWindow.webContents.openDevTools({ mode: 'detach' });
 
     // 针对 macOS 的高级置顶与跨虚拟桌面（Space）配置
@@ -82,6 +84,7 @@ app.on('activate', () => {
 // 1. 切换到面板状态（展开）
 ipcMain.on('switch-to-panel', () => {
     if (!mainWindow) return;
+    isPanelMode = true; // 🌟 展开时设为 true
     const primaryDisplay = screen.getPrimaryDisplay();
     const { x: workX, y: workY, width: screenWidth } = primaryDisplay.workArea;
     const padding = 10;
@@ -101,6 +104,7 @@ ipcMain.on('switch-to-panel', () => {
 // 2. 切换到悬浮球状态（收起）
 ipcMain.on('switch-to-ball', () => {
     if (!mainWindow) return;
+    isPanelMode = false; // 🌟 收起时设为 false
     const primaryDisplay = screen.getPrimaryDisplay();
     const { x: workX, y: workY, width: screenWidth } = primaryDisplay.workArea;
     const padding = 10;
@@ -115,4 +119,32 @@ ipcMain.on('switch-to-ball', () => {
         width: BALL_SIZE,
         height: BALL_SIZE
     }, true);
+});
+
+// 3. 弹出右键菜单
+ipcMain.on('show-context-menu', (event) => {
+    const template = [
+        {
+            label: '显示/隐藏面板',
+            click: () => {
+                // 如果是悬浮球就展开，如果是面板就收起
+                if (isPanelMode) {
+                    mainWindow.webContents.send('execute-collapse'); // 通知前端收起
+                } else {
+                    mainWindow.webContents.send('execute-expand');   // 通知前端展开
+                }
+            }
+        },
+        { type: 'separator' }, // 分割线
+        {
+            label: '退出随手记',
+            click: () => {
+                app.quit(); // 真正退出程序
+            }
+        }
+    ];
+    
+    const menu = Menu.buildFromTemplate(template);
+    // 在当前获得焦点的窗口上弹出菜单
+    menu.popup(BrowserWindow.fromWebContents(event.sender));
 });

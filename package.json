@@ -1,22 +1,19 @@
 {
   "name": "my-desktop-app",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "我的Electron悬浮笔记应用",
   "main": "main.js",
   "scripts": {
-    "start": "npx electron main.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder",
+    "start": "electron main.js",
     "pack": "electron-builder --dir",
-    "dist": "DEBUG=electron-builder electron-builder --mac dmg"
+    "dist": "electron-builder --mac dmg"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "electron": "^42.1.0",
-    "electron-builder": "^26.8.1",
-    "electron-updater": "^6.8.3"
+    "electron-builder": "^26.8.1"
   },
   "build": {
     "appId": "com.yourname.memoapp",
@@ -24,31 +21,19 @@
     "electronDownload": {
       "mirror": "https://npmmirror.com/mirrors/electron/"
     },
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "renderer.js"
+    ],
     "mac": {
-      "target": "dmg",
-      "icon": "build/icon.icns", 
-      "category": "public.app-category.utilities",
-      "identity": null, 
-      "hardenedRuntime": false
-    },
-    "dmg": {
-      "background": null, 
-      "iconSize": 100,
-      "contents": [
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        },
-        {
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        }
-      ]
+      "target": "dir",
+      "icon": "build/icon.icns",
+      "identity": null
     }
   }
 }
-
-

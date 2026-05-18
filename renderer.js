@@ -46,3 +46,28 @@ function showStatus(msg) {
     statusTip.style.opacity = '1';
     setTimeout(() => { statusTip.style.opacity = '0.5'; }, 3000);
 }
+
+// --- 6. 右键菜单绑定 ---
+
+// 监听整个页面的右键点击
+window.addEventListener('contextmenu', (e) => {
+    // 1. 如果在悬浮球状态，点击悬浮球任何地方都弹出右键菜单
+    // 2. 如果在面板状态，只有点击顶部的拖拽条 (.drag-bar) 才弹出右键菜单
+    const isBallMode = document.body.classList.contains('is-ball');
+    const isClickOnDragBar = e.target.classList.contains('drag-bar');
+
+    if (isBallMode || isClickOnDragBar) {
+        e.preventDefault(); // 阻止浏览器自带的默认菜单
+        window.electronAPI.showContextMenu(); // 呼叫主进程弹出自定义菜单
+    }
+});
+
+// 顺便接收一下主进程菜单里“显示/隐藏”的点击联动
+if (window.electronAPI) {
+    if (typeof window.electronAPI.onExecuteCollapse === 'function') {
+        window.electronAPI.onExecuteCollapse(() => collapseToBall());
+    }
+    if (typeof window.electronAPI.onExecuteExpand === 'function') {
+        window.electronAPI.onExecuteExpand(() => expandToPanel());
+    }
+}
