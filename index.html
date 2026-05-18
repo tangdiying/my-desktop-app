@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随手记</title>
+    <style>
+        /* 全局重置，确保铺满窗口 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: rgba(30, 30, 30, 0.75); /* 暗色半透明 */
+            backdrop-filter: blur(20px);              /* 高级毛玻璃效果 */
+            color: #f5f5f7;
+            height: 100vh;
+            overflow: hidden;
+            border-radius: 12px;                      /* 圆角卡片 */
+            border: 1px solid rgba(255, 255, 255, 0.15); /* 细腻的边框线 */
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* 顶部拖拽条：专属拖拽区域 */
+        .drag-bar {
+            height: 30px;
+            width: 100%;
+            -webkit-app-region: drag; /* 只有这里负责拖拽 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 2px;
+            user-select: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* 主体交互区：必须明确禁止拖拽，否则无法点击和输入 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            gap: 10px;
+            -webkit-app-region: no-drag; /* 显式禁止拖拽，恢复点击事件 */
+        }
+
+        /* 仿备忘录的文本框 */
+        textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f5f5f7;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none; /* 禁止手动调整大小 */
+            font-family: inherit;
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 底部工具栏 */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            -webkit-app-region: no-drag;
+        }
+
+        .status-tip {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 现代质感按钮 */
+        button {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 5px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 专门用来按住拖动的区域 -->
+        <div class="drag-bar">••• 随手记 •••</div>
+        
+        <!-- 具体的交互内容区域 -->
+        <div class="main-content">
+            <textarea id="problemText" placeholder="有一些新想法？在这里记录开发问题..."></textarea>
+            <div class="footer">
+                <span id="status" class="status-tip">已载入历史记录</span>
+                <button onclick="saveProblem()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+
+</html>

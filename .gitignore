@@ -1,0 +1,27 @@
+# 编辑器/系统自动生成的文件
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 依赖包文件夹（不提交第三方代码）
+node_modules/
+vendor/
+venv/
+.env
+
+# 编译产物、打包文件
+dist/
+build/
+out/
+*.exe
+*.dll
+release
+
+# 日志文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
