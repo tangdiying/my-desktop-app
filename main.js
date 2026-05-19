@@ -38,7 +38,7 @@ function createWindow() {
 
     mainWindow.loadFile('index.html');
     // mainWindow.webContents.openDevTools();
-    // mainWindow.webContents.openDevTools({ mode: 'detach' });
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
 
     // 针对 macOS 的高级置顶与跨虚拟桌面（Space）配置
     if (process.platform === 'darwin') {
